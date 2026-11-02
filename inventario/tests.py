@@ -119,3 +119,15 @@ class FlujosBuildCorpTest(TestCase):
         )
         self.assertEqual(response.status_code, 201)
         self.assertTrue(Contratista.objects.filter(rut="33333333-3").exists())
+
+    def test_ruta_inexistente_vuelve_al_inicio(self):
+        response = self.client.get("/35etef")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "/")
+        nested = self.client.get("/invalida/cualquier-cosa/")
+        self.assertEqual(nested.status_code, 302)
+        self.assertEqual(nested["Location"], "/")
+
+    def test_ruta_inexistente_de_api_sigue_dando_404(self):
+        response = self.client.get("/api/no-existe/")
+        self.assertEqual(response.status_code, 404)
