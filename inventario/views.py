@@ -30,3 +30,9 @@ def dashboard(request):
         "proximos": proximos,
         "hoy": hoy,
     })
+
+
+@login_required
+def api_console(request):
+    """Centro operativo con solicitudes autenticadas a la API JSON real."""
+    return render(request, "inventario/api_console.html")

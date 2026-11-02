@@ -14,12 +14,12 @@
   <nav aria-label="Secciones">
     <a href="/" class="active">◉ Panel general</a>
     {% if user.is_staff %}
-    <a href="/admin/inventario/herramienta/">▤ Herramientas</a>
-    <a href="/admin/inventario/prestamo/">↗ Préstamos</a>
-    <a href="/admin/inventario/contratista/">♙ Contratistas</a>
-    <a href="/admin/inventario/mantenimiento/">⚙ Mantenimientos</a>
+    <a href="/api/?modulo=herramientas">▤ Herramientas</a>
+    <a href="/api/?modulo=prestamos">↗ Préstamos</a>
+    <a href="/api/?modulo=contratistas">♙ Contratistas</a>
+    <a href="/api/?modulo=mantenimientos">⚙ Mantenimientos</a>
     {% endif %}
-    <a href="/api/">⌘ API REST</a>
+    <a href="/api/">⌘ Centro API</a>
   </nav>
 </aside>
 <main>
@@ -28,7 +28,7 @@
     <h1>Panel de operaciones</h1>
     <p>Estado de herramientas, devoluciones y mantenimientos · {{ hoy|date:"d/m/Y" }}</p></div>
     <div>
-      {% if user.is_staff %}<a class="btn" href="/admin/inventario/prestamo/add/">+ Registrar préstamo</a>{% endif %}
+      {% if user.is_staff %}<a class="btn" href="/api/?modulo=prestamos&nuevo=1">+ Registrar préstamo</a>{% endif %}
       <form action="{% url 'logout' %}" method="post" style="display:inline;margin-left:8px">{% csrf_token %}<button class="btn secondary" type="submit">Salir</button></form>
     </div>
   </div>

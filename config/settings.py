@@ -83,3 +83,10 @@ CSRF_TRUSTED_ORIGINS = [
     v.strip() for v in os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
     if v.strip()
 ]
+
+# API sin la pantalla predeterminada de DRF. El centro visual está en /api/.
+REST_FRAMEWORK = {
+    "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
+    "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+}

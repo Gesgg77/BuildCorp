@@ -1,0 +1,81 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Centro de gestión | BuildCorp</title>
+<link rel="stylesheet" href="{% static 'inventario/style.css' %}">
+<link rel="stylesheet" href="{% static 'inventario/api_console.css' %}">
+<script src="{% static 'inventario/api_console.js' %}" defer></script>
+</head>
+<body>
+<div class="shell ap-shell" id="apiApp" data-staff="{% if user.is_staff %}true{% else %}false{% endif %}">
+<aside class="api-sidebar">
+  <a href="/" class="brand">Build<span>Corp</span></a>
+  <p class="brand-sub">WORKSPACE / OPERACIONES</p>
+  <div class="api-side-label">NAVEGACIÓN</div>
+  <nav class="ap-nav">
+    <a href="/">◈ <span>Panel general</span></a>
+    <a href="/api/" class="active">▤ <span>Centro de gestión</span></a>
+  </nav>
+  <div class="api-side-label ap-side-gap">MÓDULOS</div>
+  <div class="ap-modules" role="group" aria-label="Módulos">
+    <button class="ap-module active" type="button" data-resource="herramientas"><span class="ap-icon">▦</span> Herramientas <span class="ap-chevron">›</span></button>
+    <button class="ap-module" type="button" data-resource="prestamos"><span class="ap-icon">↗</span> Préstamos <span class="ap-chevron">›</span></button>
+    <button class="ap-module" type="button" data-resource="contratistas"><span class="ap-icon">♙</span> Contratistas <span class="ap-chevron">›</span></button>
+    <button class="ap-module" type="button" data-resource="mantenimientos"><span class="ap-icon">⚙</span> Mantenimientos <span class="ap-chevron">›</span></button>
+  </div>
+  <div class="ap-sidebar-foot">
+    <div class="ap-online"><span class="ap-dot"></span> API conectada · Django REST</div>
+    {% if user.is_staff %}<a href="/admin/">Administración avanzada ↗</a>{% endif %}
+  </div>
+</aside>
+<main class="ap-main">
+  <div class="ap-crumb">BUILDCORP <span>/</span> OPERACIONES <span>/</span> <strong id="breadcrumb">HERRAMIENTAS</strong></div>
+  <div class="ap-title-row">
+    <div><div class="eyebrow">CENTRO DE CONTROL</div><h1 id="moduleTitle">Herramientas</h1><p id="moduleDescription">Gestiona el inventario y consulta tus registros.</p></div>
+    <div class="ap-title-actions">
+      <button type="button" class="ap-ghost" id="refreshBtn">↻ Actualizar</button>
+      <button type="button" class="btn" id="newBtn" {% if not user.is_staff %}hidden{% endif %}>+ Nuevo registro</button>
+    </div>
+  </div>
+  <div class="ap-summary">
+    <div class="ap-summary-card"><div class="ap-label">REGISTROS TOTALES</div><strong id="totalCount">—</strong><small>Datos de PostgreSQL</small></div>
+    <div class="ap-summary-card"><div class="ap-label">ORIGEN DE DATOS</div><strong class="ap-summary-source">API REST</strong><small>Autenticación requerida</small></div>
+    <div class="ap-summary-card"><div class="ap-label">ESTADO DE SOLICITUD</div><strong class="ap-status" id="requestStatus">Conectando</strong><small id="updatedAt">Sin consultar</small></div>
+  </div>
+  <section class="ap-panel ap-list-panel">
+    <div class="ap-panel-top">
+      <div><h2>Registros</h2><div class="ap-subtitle" id="recordsSubtitle">Información actualizada del servidor</div></div>
+      <div class="ap-tools">
+        <label class="ap-search-wrap" for="searchRecords"><span>⌕</span><input id="searchRecords" placeholder="Buscar registros..." type="search" autocomplete="off"></label>
+      </div>
+    </div>
+    <div class="ap-table-wrap"><table class="ap-table"><thead id="tableHead"></thead><tbody id="tableBody"><tr><td>Cargando información…</td></tr></tbody></table></div>
+    <div class="ap-table-footer"><span id="tableFooter">—</span><span class="ap-seal">● Base de datos en vivo</span></div>
+  </section>
+  <section class="ap-panel ap-endpoints-panel">
+    <div class="ap-panel-top">
+      <div><div class="eyebrow">BACKEND / JSON</div><h2>Explorador de API</h2><div class="ap-subtitle">Prueba una consulta GET sobre tu API real.</div></div>
+      <span class="ap-method-badge">GET</span>
+    </div>
+    <div class="ap-endpoint-bar"><code id="apiEndpoint">GET /api/herramientas/</code><a id="openEndpoint" href="/api/herramientas/" target="_blank" rel="noopener">Abrir JSON ↗</a></div>
+    <div class="ap-response-head"><span><span class="ap-dot"></span> RESPUESTA JSON</span><button type="button" id="copyJson">Copiar respuesta</button></div>
+    <pre class="ap-json" id="apiResponse" tabindex="0">Cargando respuesta...</pre>
+  </section>
+  <footer class="ap-footer">BuildCorp · Gestión de activos · Django + PostgreSQL + AWS EC2</footer>
+</main>
+</div>
+<div id="toast" class="ap-toast" role="status" aria-live="polite" hidden></div>
+<div class="ap-dialog-wrap" id="editorWrap" hidden>
+  <div class="ap-dialog-backdrop" id="editorBackdrop"></div>
+  <section class="ap-dialog" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
+    <div class="ap-editor-head"><div><div class="eyebrow">EDICIÓN DE DATOS</div><h2 id="editorTitle">Nuevo registro</h2></div><button id="closeEditor" type="button" class="ap-close" aria-label="Cerrar">×</button></div>
+    <div id="editorError" class="ap-editor-error" role="alert" hidden></div>
+    <form id="editorForm" novalidate>{% csrf_token %}
+      <div class="ap-form-fields" id="editorFields"></div>
+      <div class="ap-form-actions"><button class="ap-ghost" type="button" id="cancelEditor">Cancelar</button><button class="btn" type="submit" id="saveEditor">Guardar</button></div>
+    </form>
+  </section>
+</div>
+</body></html>
