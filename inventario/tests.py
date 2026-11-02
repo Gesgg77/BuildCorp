@@ -1,3 +1,84 @@
+from datetime import timedelta
 from django.test import TestCase
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from django.contrib.auth import get_user_model
+from rest_framework.test import APIClient
+from .models import Herramienta, Contratista, Prestamo, Mantenimiento
 
-# Create your tests here.
+
+class FlujosBuildCorpTest(TestCase):
+    def setUp(self):
+        self.h = Herramienta.objects.create(codigo="T-001", nombre="Taladro")
+        self.h2 = Herramienta.objects.create(codigo="T-002", nombre="Sierra")
+        self.c = Contratista.objects.create(nombre="Operario", rut="11111111-1")
+        self.c2 = Contratista.objects.create(nombre="Operario 2", rut="22222222-2")
+        self.hoy = timezone.localdate()
+
+    def nuevo_prestamo(self, herramienta=None, contratista=None, vencimiento=3):
+        return Prestamo.objects.create(
+            herramienta=herramienta or self.h,
+            contratista=contratista or self.c,
+            fecha_entrega=self.hoy,
+            fecha_limite=self.hoy + timedelta(days=vencimiento),
+            firma_responsable="Operario",
+        )
+
+    def test_prestamo_cambia_estado_y_devolucion_lo_libera(self):
+        p = self.nuevo_prestamo()
+        self.h.refresh_from_db()
+        self.assertEqual(self.h.estado, "en_uso")
+        p.fecha_devolucion = self.hoy
+        p.save()
+        self.h.refresh_from_db()
+        self.assertEqual(self.h.estado, "disponible")
+
+    def test_impide_dos_prestamos_simultaneos(self):
+        self.nuevo_prestamo()
+        with self.assertRaises(ValidationError):
+            self.nuevo_prestamo(contratista=self.c2)
+
+    def test_moroso_bloqueado(self):
+        self.nuevo_prestamo(vencimiento=-1)
+        self.assertTrue(self.c.moroso)
+        with self.assertRaises(ValidationError):
+            self.nuevo_prestamo(herramienta=self.h2)
+
+    def test_no_presta_herramienta_en_mantenimiento(self):
+        self.h.estado = "mantenimiento"
+        self.h.save()
+        with self.assertRaises(ValidationError):
+            self.nuevo_prestamo()
+
+    def test_requiere_constancia_de_recepcion(self):
+        with self.assertRaises(ValidationError):
+            Prestamo.objects.create(
+                herramienta=self.h, contratista=self.c,
+                fecha_entrega=self.hoy, fecha_limite=self.hoy,
+                firma_responsable=""
+            )
+
+    def test_fecha_devolucion_invalida(self):
+        p = self.nuevo_prestamo()
+        p.fecha_devolucion = self.hoy - timedelta(days=1)
+        with self.assertRaises(ValidationError):
+            p.save()
+
+    def test_alerta_mantenimiento(self):
+        m = Mantenimiento.objects.create(
+            herramienta=self.h, fecha_programada=self.hoy - timedelta(days=1)
+        )
+        self.assertTrue(m.vencido)
+
+    def test_api_requiere_login(self):
+        r = APIClient().get("/api/herramientas/")
+        self.assertIn(r.status_code, (401, 403))
+
+    def test_api_usuario_normal_no_puede_modificar(self):
+        user = get_user_model().objects.create_user(username="operador", password="clave-segura-test")
+        client = APIClient()
+        client.force_authenticate(user=user)
+        self.assertEqual(client.post("/api/herramientas/", {
+            "codigo": "T-003", "nombre": "Martillo"
+        }).status_code, 403)
+        self.assertEqual(client.get("/api/herramientas/").status_code, 200)

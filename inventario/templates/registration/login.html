@@ -1,0 +1,16 @@
+{% load static %}
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ingresar | BuildCorp</title><link rel="stylesheet" href="{% static 'inventario/style.css' %}"></head><body>
+<div class="login-wrap">
+<div class="login">
+<div class="brand">Build<span>Corp</span></div>
+<p>Acceso privado al control de herramientas.</p>
+{% if form.errors %}<p class="errors">Usuario o contraseña incorrectos.</p>{% endif %}
+{% if next and user.is_authenticated %}<p class="errors">Tu cuenta no tiene permiso para ingresar.</p>{% endif %}
+<form method="post" action="{% url 'login' %}">{% csrf_token %}
+<label for="id_username">Usuario</label>{{ form.username }}
+<label for="id_password">Contraseña</label>{{ form.password }}
+<input type="hidden" name="next" value="{{ next }}">
+<button type="submit" class="btn">Iniciar sesión</button>
+</form>
+</div></div></body></html>
