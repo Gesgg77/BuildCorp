@@ -39,7 +39,13 @@ class FlujosBuildCorpTest(TestCase):
             self.nuevo_prestamo(contratista=self.c2)
 
     def test_moroso_bloqueado(self):
-        self.nuevo_prestamo(vencimiento=-1)
+        Prestamo.objects.create(
+            herramienta=self.h,
+            contratista=self.c,
+            fecha_entrega=self.hoy - timedelta(days=5),
+            fecha_limite=self.hoy - timedelta(days=1),
+            firma_responsable="Operario",
+        )
         self.assertTrue(self.c.moroso)
         with self.assertRaises(ValidationError):
             self.nuevo_prestamo(herramienta=self.h2)
