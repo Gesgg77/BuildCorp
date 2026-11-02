@@ -88,3 +88,34 @@ class FlujosBuildCorpTest(TestCase):
             "codigo": "T-003", "nombre": "Martillo"
         }).status_code, 403)
         self.assertEqual(client.get("/api/herramientas/").status_code, 200)
+
+    def test_api_console_protegida(self):
+        response = self.client.get("/api/")
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/accounts/login/", response["Location"])
+
+    def test_api_console_inicia_y_renderiza(self):
+        user = get_user_model().objects.create_user(username="lector", password="clave-segura-test")
+        self.client.force_login(user)
+        response = self.client.get("/api/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Centro de gestión")
+        self.assertContains(response, "api_console.js")
+
+    def test_api_lectura_json_autenticada(self):
+        user = get_user_model().objects.create_user(username="lector", password="clave-segura-test")
+        self.client.force_login(user)
+        response = self.client.get("/api/herramientas/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/json")
+        self.assertEqual(len(response.json()), 2)
+
+    def test_api_admin_crea_contratista(self):
+        admin = get_user_model().objects.create_user(username="encargado", password="clave-segura-test", is_staff=True)
+        self.client.force_login(admin)
+        response = self.client.post(
+            "/api/contratistas/",
+            {"nombre": "Operario 3", "rut": "33333333-3"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(Contratista.objects.filter(rut="33333333-3").exists())
