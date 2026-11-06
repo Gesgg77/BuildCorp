@@ -9,7 +9,7 @@
 <script src="{% static 'inventario/api_console.js' %}" defer></script>
 </head>
 <body>
-<div class="shell ap-shell" id="apiApp" data-staff="{% if user.is_staff %}true{% else %}false{% endif %}">
+<div class="shell ap-shell" id="apiApp" data-staff="{% if user.is_staff %}true{% else %}false{% endif %}" data-permissions="{{ api_permissions_json|escape }}">
 <aside class="api-sidebar">
   <a href="/" class="brand">Build<span>Corp</span></a>
   <p class="brand-sub">WORKSPACE / OPERACIONES</p>

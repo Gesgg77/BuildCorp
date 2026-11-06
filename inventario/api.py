@@ -1,8 +1,7 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers, viewsets
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.exceptions import ValidationError as DRFValidationError
-from rest_framework.permissions import SAFE_METHODS
+from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 from .models import Herramienta, Contratista, Prestamo, Mantenimiento
 
@@ -60,11 +59,30 @@ class MantenimientoSerializer(ModeloValidadoMixin, serializers.ModelSerializer):
         fields = ["id", "herramienta", "tipo", "fecha_programada", "fecha_realizada", "descripcion", "vencido"]
 
 
+class PermisosPorModelo(BasePermission):
+    """Lee cualquier usuario autenticado; escribe staff con permiso por modelo."""
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        if request.method in SAFE_METHODS:
+            return True
+        if not user.is_staff:
+            return False
+        operation = {
+            "POST": "add", "PUT": "change",
+            "PATCH": "change", "DELETE": "delete",
+        }.get(request.method)
+        if operation is None:
+            return False
+        model = view.get_queryset().model
+        permission_name = f"{model._meta.app_label}.{operation}_{model._meta.model_name}"
+        return user.has_perm(permission_name)
+
+
 class AdminEscrituraAutenticadoLectura:
-    def get_permissions(self):
-        if self.request.method in SAFE_METHODS:
-            return [IsAuthenticated()]
-        return [IsAdminUser()]
+    permission_classes = [PermisosPorModelo]
 
 
 class HerramientaViewSet(AdminEscrituraAutenticadoLectura, viewsets.ModelViewSet):

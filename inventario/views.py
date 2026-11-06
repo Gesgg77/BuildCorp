@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.utils import timezone
+import json
 from .models import Herramienta, Contratista, Prestamo, Mantenimiento
 
 
@@ -35,4 +36,22 @@ def dashboard(request):
 @login_required
 def api_console(request):
     """Centro operativo con solicitudes autenticadas a la API JSON real."""
-    return render(request, "inventario/api_console.html")
+    models = {
+        "herramientas": Herramienta,
+        "prestamos": Prestamo,
+        "contratistas": Contratista,
+        "mantenimientos": Mantenimiento,
+    }
+    permissions = {}
+    for name, model in models.items():
+        label = f"{model._meta.app_label}."
+        suffix = model._meta.model_name
+        permissions[name] = {
+            operation: request.user.is_staff and request.user.has_perm(
+                label + operation + "_" + suffix
+            )
+            for operation in ("add", "change", "delete")
+        }
+    return render(request, "inventario/api_console.html", {
+        "api_permissions_json": json.dumps(permissions),
+    })

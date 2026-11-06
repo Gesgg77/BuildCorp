@@ -3,6 +3,8 @@ from django.test import TestCase
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group, Permission
+from django.core.management import call_command
 from rest_framework.test import APIClient
 from .models import Herramienta, Contratista, Prestamo, Mantenimiento
 
@@ -111,7 +113,7 @@ class FlujosBuildCorpTest(TestCase):
         self.assertEqual(len(response.json()), 2)
 
     def test_api_admin_crea_contratista(self):
-        admin = get_user_model().objects.create_user(username="encargado", password="clave-segura-test", is_staff=True)
+        admin = get_user_model().objects.create_superuser(username="encargado", password="clave-segura-test")
         self.client.force_login(admin)
         response = self.client.post(
             "/api/contratistas/",
@@ -131,3 +133,43 @@ class FlujosBuildCorpTest(TestCase):
     def test_ruta_inexistente_de_api_sigue_dando_404(self):
         response = self.client.get("/api/no-existe/")
         self.assertEqual(response.status_code, 404)
+
+    def test_roles_operador_tienen_acceso_limitado(self):
+        call_command("configurar_roles_demo", verbosity=0)
+        user = get_user_model().objects.create_user(
+            username="operador_rol", password="clave-segura-test", is_staff=True
+        )
+        user.groups.add(Group.objects.get(name="Operador"))
+        client = APIClient()
+        client.force_authenticate(user=user)
+        create_tool = client.post("/api/herramientas/", {
+            "codigo": "T-904", "nombre": "Llave inglesa",
+        })
+        self.assertEqual(create_tool.status_code, 201)
+        self.assertEqual(client.post("/api/contratistas/", {
+            "nombre": "Sin permiso", "rut": "99999999-9",
+        }).status_code, 403)
+        self.assertEqual(client.delete("/api/herramientas/1/").status_code, 403)
+
+    def test_roles_lector_no_puede_modificar(self):
+        call_command("configurar_roles_demo", verbosity=0)
+        user = get_user_model().objects.create_user(
+            username="lector_rol", password="clave-segura-test"
+        )
+        user.groups.add(Group.objects.get(name="Lector"))
+        client = APIClient()
+        client.force_authenticate(user=user)
+        self.assertEqual(client.get("/api/herramientas/").status_code, 200)
+        self.assertEqual(client.post("/api/herramientas/", {
+            "codigo": "T-905", "nombre": "Martillo",
+        }).status_code, 403)
+
+    def test_staff_sin_permiso_no_puede_escribir(self):
+        user = get_user_model().objects.create_user(
+            username="staff_sin_rol", password="clave-segura-test", is_staff=True
+        )
+        client = APIClient()
+        client.force_authenticate(user=user)
+        self.assertEqual(client.post("/api/herramientas/", {
+            "codigo": "T-906", "nombre": "Sierra circular",
+        }).status_code, 403)

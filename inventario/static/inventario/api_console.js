@@ -3,6 +3,8 @@
 const root = document.getElementById("apiApp");
 if (!root) return;
 const staff = root.dataset.staff === "true";
+const permissionMap = JSON.parse(root.dataset.permissions || "{}");
+const can = (action) => Boolean(permissionMap[active]?.[action]);
 const defs = {
  herramientas: {title:"Herramientas",description:"Inventario de activos, disponibilidad y mantenimiento.",fields:[
  ["codigo","Código","text",true],["nombre","Nombre","text",true],["estado","Estado","select",true,["disponible","en_uso","mantenimiento","baja"]],["horas_uso","Horas de uso","number",true],["fecha_proximo_mantenimiento","Próximo mantenimiento","date",false]],
@@ -53,19 +55,21 @@ const q=$("searchRecords").value.toLocaleLowerCase("es").trim();
 const found=rows.filter(x=>Object.values(x).some(v=>String(v??"").toLocaleLowerCase("es").includes(q)));
 const head=$("tableHead");head.replaceChildren();const htr=node("tr");
 for(const [,label] of defs[active].columns)htr.append(node("th","",label));
-if(staff)htr.append(node("th","","GESTIÓN"));head.append(htr);
+if(staff && (can("change") || can("delete")))htr.append(node("th","","GESTIÓN"));head.append(htr);
 const body=$("tableBody");body.replaceChildren();
-if(!found.length){const tr=node("tr"),td=node("td","ap-empty",q?"No se encontraron coincidencias.":"No hay registros en este módulo.");td.colSpan=defs[active].columns.length+(staff?1:0);tr.append(td);body.append(tr);}
+if(!found.length){const tr=node("tr"),td=node("td","ap-empty",q?"No se encontraron coincidencias.":"No hay registros en este módulo.");td.colSpan=defs[active].columns.length+(staff && (can("change") || can("delete"))?1:0);tr.append(td);body.append(tr);}
 for(const item of found){
 const tr=node("tr");
 for(const [key] of defs[active].columns){const td=node("td");td.append(flag(key,item[key]));tr.append(td);}
-if(staff){const td=node("td"),act=node("div","ap-row-actions"),btn=node("button","ap-small-btn","Editar");btn.type="button";btn.addEventListener("click",()=>openEditor(item));act.append(btn);
-const del=node("button","ap-small-btn danger","Eliminar");del.type="button";del.addEventListener("click",()=>removeItem(item));act.append(del);td.append(act);tr.append(td);}body.append(tr);}
+if(staff && (can("change") || can("delete"))){const td=node("td"),act=node("div","ap-row-actions");
+if(can("change")){const btn=node("button","ap-small-btn","Editar");btn.type="button";btn.addEventListener("click",()=>openEditor(item));act.append(btn);}
+if(can("delete")){const del=node("button","ap-small-btn danger","Eliminar");del.type="button";del.addEventListener("click",()=>removeItem(item));act.append(del);}
+td.append(act);tr.append(td);}body.append(tr);}
 $("totalCount").textContent=rows.length;$("tableFooter").textContent=found.length+" de "+rows.length+" registros";
 }
 async function load(k){
 if(!defs[k])k="herramientas";
-active=k;$("moduleTitle").textContent=defs[k].title;$("breadcrumb").textContent=k.toUpperCase();$("moduleDescription").textContent=defs[k].description;
+active=k;$("newBtn").hidden=!can("add");$("moduleTitle").textContent=defs[k].title;$("breadcrumb").textContent=k.toUpperCase();$("moduleDescription").textContent=defs[k].description;
 $("apiEndpoint").textContent="GET "+url(k);$("openEndpoint").href=url(k);$("requestStatus").textContent="Consultando";
 document.querySelectorAll(".ap-module").forEach(b=>b.classList.toggle("active",b.dataset.resource===k));
 const params=new URLSearchParams(location.search);params.set("modulo",k);params.delete("nuevo");history.replaceState(null,"","/api/?"+params);
@@ -88,7 +92,7 @@ if(type==="date"&&!value&&!required)input.value="";
 wrap.append(input);return wrap;
 }
 async function openEditor(item=null){
-if(!staff)return;
+if(!staff || !can(item ? "change" : "add"))return;
 editId=item?.id||null;$("editorError").hidden=true;$("editorError").textContent="";
 $("editorTitle").textContent=editId?"Editar "+defs[active].title.toLowerCase():"Nuevo registro";
 const fields=$("editorFields");fields.replaceChildren();
@@ -121,7 +125,7 @@ try{await request(url(active)+(editId?editId+"/":""),{method:editId?"PATCH":"POS
 catch(e){$("editorError").hidden=false;$("editorError").textContent=e.message;}finally{btn.disabled=false;}
 }
 async function removeItem(item){
-if(!staff||!confirm("¿Eliminar este registro? No se puede recuperar."))return;
+if(!can("delete")||!confirm("¿Eliminar este registro? No se puede recuperar."))return;
 try{await request(url(active)+item.id+"/",{method:"DELETE"});notify("Registro eliminado.");await load(active);}
 catch(e){notify("No se pudo eliminar: "+e.message);}
 }
@@ -136,5 +140,5 @@ $("editorBackdrop").addEventListener("click",closeEditor);
 $("editorForm").addEventListener("submit",save);
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeEditor();});
 const params=new URLSearchParams(location.search);const start=defs[params.get("modulo")]?params.get("modulo"):"herramientas";
-load(start).then(()=>{if(staff&&params.get("nuevo")==="1")openEditor();});
+load(start).then(()=>{if(can("add")&&params.get("nuevo")==="1")openEditor();});
 })();
