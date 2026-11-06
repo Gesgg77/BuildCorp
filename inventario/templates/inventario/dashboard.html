@@ -1,0 +1,72 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BuildCorp | Control de herramientas</title>
+<link rel="stylesheet" href="{% static 'inventario/style.css' %}">
+</head>
+<body>
+<div class="shell">
+<aside>
+  <div class="brand">Build<span>Corp</span></div>
+  <p class="brand-sub">PLATAFORMA DE OPERACIONES</p>
+  <nav aria-label="Secciones">
+    <a href="/" class="active">◉ Panel general</a>
+    {% if user.is_staff %}
+    <a href="/api/?modulo=herramientas">▤ Herramientas</a>
+    <a href="/api/?modulo=prestamos">↗ Préstamos</a>
+    <a href="/api/?modulo=contratistas">♙ Contratistas</a>
+    <a href="/api/?modulo=mantenimientos">⚙ Mantenimientos</a>
+    {% endif %}
+    <a href="/api/">⌘ Centro API</a>
+  </nav>
+</aside>
+<main>
+  <div class="header">
+    <div><div class="eyebrow">CONTROL DE INVENTARIO</div>
+    <h1>Panel de operaciones</h1>
+    <p>Estado de herramientas, devoluciones y mantenimientos · {{ hoy|date:"d/m/Y" }}</p></div>
+    <div>
+      {% if user.is_staff %}<a class="btn" href="/api/?modulo=prestamos&nuevo=1">+ Registrar préstamo</a>{% endif %}
+      <form action="{% url 'logout' %}" method="post" style="display:inline;margin-left:8px">{% csrf_token %}<button class="btn secondary" type="submit">Salir</button></form>
+    </div>
+  </div>
+  <div class="stats">
+    <section class="stat"><p class="label">Herramientas registradas</p><p class="value">{{ herramientas }}</p><div class="tiny">Inventario total</div></section>
+    <section class="stat"><p class="label">Disponibles</p><p class="value">{{ disponibles }}</p><div class="tiny">Listas para entregar</div></section>
+    <section class="stat"><p class="label">En préstamo</p><p class="value">{{ prestados }}</p><div class="tiny">Pendientes de devolución</div></section>
+    <section class="stat"><p class="label">Atrasados</p><p class="value">{{ atrasados }}</p><div class="tiny">Requieren seguimiento</div></section>
+  </div>
+  <div class="sections">
+    <section class="panel">
+      <div class="panel-head"><h2>Préstamos activos</h2><span class="muted">Próximas devoluciones</span></div>
+      {% if proximos %}
+      <table><thead><tr><th>Herramienta</th><th>Responsable</th><th>Fecha límite</th><th>Estado</th></tr></thead><tbody>
+      {% for p in proximos %}
+      <tr><td>{{ p.herramienta.nombre }}</td><td>{{ p.contratista.nombre }}</td><td>{{ p.fecha_limite|date:"d/m/Y" }}</td>
+      <td>{% if p.atrasado %}<span class="pill">Atrasado</span>{% else %}Vigente{% endif %}</td></tr>
+      {% endfor %}</tbody></table>
+      {% else %}<div class="empty">Todavía no hay préstamos activos.</div>{% endif %}
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Alertas de mantenimiento</h2><span class="pill">{{ mantenimientos }}</span></div>
+      {% for m in mantenimientos_lista %}
+      <div class="item"><strong>{{ m.herramienta.nombre }}</strong><small>{{ m.get_tipo_display }} · Programado: {{ m.fecha_programada|date:"d/m/Y" }}</small></div>
+      {% empty %}<div class="empty">Sin mantenimientos programados vencidos o para hoy.</div>{% endfor %}
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Devoluciones vencidas</h2><span class="pill">{{ atrasados }}</span></div>
+      {% for p in atrasados_lista %}
+      <div class="item"><strong>{{ p.herramienta.nombre }}</strong><small>{{ p.contratista.nombre }} · Venció: {{ p.fecha_limite|date:"d/m/Y" }}</small></div>
+      {% empty %}<div class="empty">No hay devoluciones atrasadas.</div>{% endfor %}
+    </section>
+    <section class="panel">
+      <h2>Accesos de gestión</h2>
+      <p>{{ contratistas }} contratista(s) registrados. Operaciones de alta, edición y devolución disponibles en Django Admin.</p>
+      {% if user.is_staff %}<a class="btn secondary" href="/admin/">Abrir administración</a>{% endif %}
+    </section>
+  </div>
+</main>
+</div>
+</body></html>

@@ -1,22 +1,27 @@
-"""
-URL configuration for config project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include, re_path
+from django.views.generic.base import RedirectView
+from django.contrib.auth.views import LoginView, LogoutView
+from rest_framework.routers import DefaultRouter
+from inventario.views import dashboard, api_console
+from inventario.api import HerramientaViewSet, ContratistaViewSet, PrestamoViewSet, MantenimientoViewSet
+
+router = DefaultRouter()
+router.register(r"herramientas", HerramientaViewSet)
+router.register(r"contratistas", ContratistaViewSet)
+router.register(r"prestamos", PrestamoViewSet)
+router.register(r"mantenimientos", MantenimientoViewSet)
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path("", dashboard, name="dashboard"),
+    path("accounts/login/", LoginView.as_view(template_name="registration/login.html"), name="login"),
+    path("accounts/logout/", LogoutView.as_view(), name="logout"),
+    path("admin/", admin.site.urls),
+    path("api/", api_console, name="api_console"),
+    path("api/", include(router.urls)),
+    # Una URL inexistente del sitio vuelve al inicio. No ocultar errores de la API/admin.
+    re_path(
+        r"^(?!(?:api|admin|accounts|static)(?:/|$)).+$",
+        RedirectView.as_view(pattern_name="dashboard", permanent=False),
+    ),
 ]
