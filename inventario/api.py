@@ -1,6 +1,9 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db.models.deletion import ProtectedError
 from rest_framework import serializers, viewsets
 from rest_framework.exceptions import ValidationError as DRFValidationError
+from rest_framework.response import Response
+from rest_framework import status
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 from .models import Herramienta, Contratista, Prestamo, Mantenimiento
@@ -84,6 +87,15 @@ class PermisosPorModelo(BasePermission):
 class AdminEscrituraAutenticadoLectura:
     permission_classes = [PermisosPorModelo]
 
+    def destroy(self, request, *args, **kwargs):
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except ProtectedError:
+            return Response(
+                {"detail": "No se puede eliminar porque existen registros relacionados."},
+                status=status.HTTP_409_CONFLICT,
+            )
+
 
 class HerramientaViewSet(AdminEscrituraAutenticadoLectura, viewsets.ModelViewSet):
     queryset = Herramienta.objects.all().order_by("codigo")
@@ -98,6 +110,17 @@ class ContratistaViewSet(AdminEscrituraAutenticadoLectura, viewsets.ModelViewSet
 class PrestamoViewSet(AdminEscrituraAutenticadoLectura, viewsets.ModelViewSet):
     queryset = Prestamo.objects.select_related("herramienta", "contratista").all()
     serializer_class = PrestamoSerializer
+
+    def perform_destroy(self, instance):
+        herramienta_id = instance.herramienta_id
+        instance.delete()
+        if not Prestamo.objects.filter(
+            herramienta_id=herramienta_id,
+            fecha_devolucion__isnull=True,
+        ).exists():
+            Herramienta.objects.filter(
+                pk=herramienta_id, estado="en_uso"
+            ).update(estado="disponible")
 
 
 class MantenimientoViewSet(AdminEscrituraAutenticadoLectura, viewsets.ModelViewSet):
