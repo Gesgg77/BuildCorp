@@ -110,16 +110,26 @@ class Prestamo(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         with transaction.atomic():
+            previous_tool_id = None
+            if self.pk:
+                previous_tool_id = Prestamo.objects.filter(pk=self.pk).values_list(
+                    "herramienta_id", flat=True
+                ).first()
             super().save(*args, **kwargs)
             if self.fecha_devolucion is None:
                 Herramienta.objects.filter(pk=self.herramienta_id).update(estado="en_uso")
-            elif not Prestamo.objects.filter(
-                herramienta_id=self.herramienta_id,
-                fecha_devolucion__isnull=True,
-            ).exists():
+            else:
                 Herramienta.objects.filter(
                     pk=self.herramienta_id, estado="en_uso"
                 ).update(estado="disponible")
+            if previous_tool_id and previous_tool_id != self.herramienta_id:
+                if not Prestamo.objects.filter(
+                    herramienta_id=previous_tool_id,
+                    fecha_devolucion__isnull=True,
+                ).exists():
+                    Herramienta.objects.filter(
+                        pk=previous_tool_id, estado="en_uso"
+                    ).update(estado="disponible")
 
 
 class Mantenimiento(models.Model):
