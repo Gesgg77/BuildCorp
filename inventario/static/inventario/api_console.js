@@ -20,7 +20,7 @@ const defs = {
  columns:[["id","ID"],["herramienta","HERRAMIENTA"],["tipo","TIPO"],["fecha_programada","PROGRAMADO"],["fecha_realizada","REALIZADO"],["vencido","VENCIDO"]]}
 };
 const $ = id => document.getElementById(id);
-let active="herramientas", rows=[], raw="[]", editId=null, toastHandle=null;
+let active="herramientas", rows=[], raw="[]", editId=null, toastHandle=null, selectedId=null;
 const node=(tag,className,txt)=>{const el=document.createElement(tag);if(className)el.className=className;if(txt!==undefined)el.textContent=String(txt);return el;};
 const url=k=>"/api/"+k+"/";
 const getCookie=name=>document.cookie.split(";").map(v=>v.trim()).find(v=>v.startsWith(name+"="))?.slice(name.length+1)||"";
@@ -50,6 +50,41 @@ else if(v===false||v==="disponible")p.classList.add("neutral");
 p.textContent=name==="estado"?friendly(name,v).replaceAll("_"," "):friendly(name,v);
 return p;}return document.createTextNode(friendly(name,v));
 };
+function refreshActions(){
+  const select = $("selectedRecord");
+  const previous = selectedId === null ? "" : String(selectedId);
+  select.replaceChildren(new Option("Selecciona un registro...", ""));
+  for (const item of rows){
+    const description = item.codigo ? item.codigo+" — "+item.nombre :
+      item.nombre ? item.nombre :
+      item.herramienta_nombre ? item.herramienta_nombre+" · "+(item.contratista_nombre || item.tipo || item.id) :
+      item.id+" · "+(item.tipo || item.herramienta || "Registro");
+    select.add(new Option(description, String(item.id)));
+  }
+  if (previous && rows.some(item => String(item.id) === previous)){
+    select.value = previous;
+  } else {
+    selectedId = null;
+    select.value = "";
+  }
+  $("actionPost").disabled = !can("add");
+  $("actionPatch").disabled = !can("change");
+  $("actionDelete").disabled = !can("delete");
+  $("actionPost").title = can("add") ? "Crear registro" : "Tu usuario no tiene permiso para crear";
+  $("actionPatch").title = can("change") ? "Editar registro seleccionado" : "Tu usuario no tiene permiso para editar";
+  $("actionDelete").title = can("delete") ? "Eliminar registro seleccionado" : "Tu usuario no tiene permiso para eliminar";
+  const anyWrite = can("add") || can("change") || can("delete");
+  $("roleHelp").textContent = anyWrite ?
+    "Permisos de tu cuenta: "+[can("add")?"crear":null,can("change")?"editar":null,can("delete")?"eliminar":null].filter(Boolean).join(", ")+"."
+    : "Modo solo lectura: inicia sesión con un administrador u operador autorizado para modificar.";
+}
+function selectedItem(){
+  const id = $("selectedRecord").value;
+  if (!id){notify("Selecciona primero un registro en la lista desplegable.");return null;}
+  const item = rows.find(row => String(row.id) === id);
+  if (!item)notify("Registro no encontrado. Actualiza la lista.");
+  return item || null;
+}
 function render(){
 const q=$("searchRecords").value.toLocaleLowerCase("es").trim();
 const found=rows.filter(x=>Object.values(x).some(v=>String(v??"").toLocaleLowerCase("es").includes(q)));
@@ -65,11 +100,11 @@ if(staff && (can("change") || can("delete"))){const td=node("td"),act=node("div"
 if(can("change")){const btn=node("button","ap-small-btn","Editar");btn.type="button";btn.addEventListener("click",()=>openEditor(item));act.append(btn);}
 if(can("delete")){const del=node("button","ap-small-btn danger","Eliminar");del.type="button";del.addEventListener("click",()=>removeItem(item));act.append(del);}
 td.append(act);tr.append(td);}body.append(tr);}
-$("totalCount").textContent=rows.length;$("tableFooter").textContent=found.length+" de "+rows.length+" registros";
+$("totalCount").textContent=rows.length;$("tableFooter").textContent=found.length+" de "+rows.length+" registros";refreshActions();
 }
 async function load(k){
 if(!defs[k])k="herramientas";
-active=k;$("newBtn").hidden=!can("add");$("moduleTitle").textContent=defs[k].title;$("breadcrumb").textContent=k.toUpperCase();$("moduleDescription").textContent=defs[k].description;
+if(active!==k)selectedId=null;active=k;$("newBtn").hidden=!can("add");$("moduleTitle").textContent=defs[k].title;$("breadcrumb").textContent=k.toUpperCase();$("moduleDescription").textContent=defs[k].description;
 $("apiEndpoint").textContent="GET "+url(k);$("openEndpoint").href=url(k);$("requestStatus").textContent="Consultando";
 document.querySelectorAll(".ap-module").forEach(b=>b.classList.toggle("active",b.dataset.resource===k));
 const params=new URLSearchParams(location.search);params.set("modulo",k);params.delete("nuevo");history.replaceState(null,"","/api/?"+params);
@@ -131,6 +166,12 @@ catch(e){notify("No se pudo eliminar: "+e.message);}
 }
 document.querySelectorAll(".ap-module").forEach(b=>b.addEventListener("click",()=>load(b.dataset.resource)));
 $("refreshBtn").addEventListener("click",()=>load(active));
+$("actionGet").addEventListener("click",()=>load(active));
+$("actionPost").addEventListener("click",()=>openEditor());
+$("actionPatch").addEventListener("click",()=>{const item=selectedItem();if(item)openEditor(item);});
+$("actionDelete").addEventListener("click",()=>{const item=selectedItem();if(item)removeItem(item);});
+$("selectedRecord").addEventListener("change",ev=>{selectedId=ev.target.value||null;});
+
 $("newBtn").addEventListener("click",()=>openEditor());
 $("searchRecords").addEventListener("input",render);
 $("copyJson").addEventListener("click",()=>{navigator.clipboard?.writeText(raw).then(()=>notify("JSON copiado")).catch(()=>notify("Copia el JSON manualmente"));});

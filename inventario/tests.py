@@ -112,6 +112,40 @@ class FlujosBuildCorpTest(TestCase):
         self.assertEqual(response["Content-Type"], "application/json")
         self.assertEqual(len(response.json()), 2)
 
+    def test_centro_gestion_presenta_opciones_crud(self):
+        admin = get_user_model().objects.create_superuser(
+            username="supervisor", password="clave-segura-test"
+        )
+        self.client.force_login(admin)
+        response = self.client.get("/api/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Gestionar registros")
+        self.assertContains(response, 'id="actionPost"')
+        self.assertContains(response, 'id="actionPatch"')
+        self.assertContains(response, 'id="actionDelete"')
+        self.assertContains(response, 'id="selectedRecord"')
+
+    def test_api_herramienta_crud_con_admin(self):
+        admin = get_user_model().objects.create_superuser(
+            username="gestor", password="clave-segura-test"
+        )
+        client = APIClient()
+        client.force_authenticate(user=admin)
+        response = client.post("/api/herramientas/", {
+            "codigo": "T-500", "nombre": "Pistola de calor",
+            "estado": "disponible", "horas_uso": 0,
+        }, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+        pk = response.data["id"]
+        response = client.patch("/api/herramientas/{}/".format(pk), {
+            "nombre": "Pistola térmica",
+        }, format="json")
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data["nombre"], "Pistola térmica")
+        response = client.delete("/api/herramientas/{}/".format(pk))
+        self.assertEqual(response.status_code, 204)
+        self.assertFalse(Herramienta.objects.filter(pk=pk).exists())
+
     def test_api_admin_crea_contratista(self):
         admin = get_user_model().objects.create_superuser(username="encargado", password="clave-segura-test")
         self.client.force_login(admin)

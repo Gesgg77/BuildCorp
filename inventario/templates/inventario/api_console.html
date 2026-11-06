@@ -44,6 +44,24 @@
     <div class="ap-summary-card"><div class="ap-label">ORIGEN DE DATOS</div><strong class="ap-summary-source">API REST</strong><small>Autenticación requerida</small></div>
     <div class="ap-summary-card"><div class="ap-label">ESTADO DE SOLICITUD</div><strong class="ap-status" id="requestStatus">Conectando</strong><small id="updatedAt">Sin consultar</small></div>
   </div>
+  <section class="ap-panel ap-actions-panel" aria-labelledby="actionsTitle">
+    <div class="ap-panel-top">
+      <div><h2 id="actionsTitle">Gestionar registros</h2>
+      <div class="ap-subtitle">Usa las opciones de la API sin escribir código.</div></div>
+      <span class="ap-method-badge">CRUD</span>
+    </div>
+    <div class="ap-action-grid">
+      <button type="button" class="ap-action-btn" id="actionGet"><span class="ap-action-method">GET</span><strong>Consultar</strong><small>Ver todos los registros</small></button>
+      <button type="button" class="ap-action-btn" id="actionPost"><span class="ap-action-method post">POST</span><strong>Crear</strong><small>Agregar un registro</small></button>
+      <button type="button" class="ap-action-btn" id="actionPatch"><span class="ap-action-method patch">PATCH</span><strong>Editar</strong><small>Modificar el seleccionado</small></button>
+      <button type="button" class="ap-action-btn" id="actionDelete"><span class="ap-action-method delete">DELETE</span><strong>Eliminar</strong><small>Borrar el seleccionado</small></button>
+    </div>
+    <div class="ap-record-picker">
+      <label for="selectedRecord">Registro para editar o eliminar</label>
+      <select id="selectedRecord"><option value="">Primero selecciona un registro...</option></select>
+      <p id="roleHelp" class="ap-permission-hint" role="status">Comprobando permisos...</p>
+    </div>
+  </section>
   <section class="ap-panel ap-list-panel">
     <div class="ap-panel-top">
       <div><h2>Registros</h2><div class="ap-subtitle" id="recordsSubtitle">Información actualizada del servidor</div></div>
@@ -56,7 +74,7 @@
   </section>
   <section class="ap-panel ap-endpoints-panel">
     <div class="ap-panel-top">
-      <div><div class="eyebrow">BACKEND / JSON</div><h2>Explorador de API</h2><div class="ap-subtitle">Prueba una consulta GET sobre tu API real.</div></div>
+      <div><div class="eyebrow">BACKEND / JSON</div><h2>Respuesta JSON de la API</h2><div class="ap-subtitle">Consulta aquí la respuesta JSON. Para crear, editar o eliminar, usa Gestión de registros arriba.</div></div>
       <span class="ap-method-badge">GET</span>
     </div>
     <div class="ap-endpoint-bar"><code id="apiEndpoint">GET /api/herramientas/</code><a id="openEndpoint" href="/api/herramientas/" target="_blank" rel="noopener">Abrir JSON ↗</a></div>
