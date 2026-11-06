@@ -138,10 +138,10 @@ function statusInfo(row){
   if(active==="contratistas")return ["moroso",row.moroso];
   return ["vencido",row.vencido];
 }
-function friendlyName(row){
-  if(active==="herramientas")return row.nombre||"Herramienta";
-  if(active==="contratistas")return row.nombre||"Contratista";
-  if(active==="prestamos")return row.herramienta_nombre||"Préstamo";
+function friendlyName(row,module=active){
+  if(module==="herramientas")return row.nombre||"Herramienta";
+  if(module==="contratistas")return row.nombre||"Contratista";
+  if(module==="prestamos")return row.herramienta_nombre||"Préstamo";
   return "Mantenimiento #"+row.id;
 }
 function friendlyDetail(row){
@@ -297,7 +297,13 @@ async function load(module){
   if(!defs[module])module="herramientas";
   const changed=active!==module;
   active=module;
-  if(changed)selectedId=null;
+  if(changed){
+    selectedId=null;
+    rows=[];
+    updateSummary();
+    syncPicker();
+    render();
+  }
   const info=defs[module];
   $("moduleTitle").textContent=info.title;
   $("breadcrumb").textContent=info.title;
@@ -414,15 +420,15 @@ async function save(event){
     $("editorError").textContent=error.message;
   }finally{button.disabled=false;}
 }
-async function removeItem(row){
-  if(!can("delete"))return;
-  const name=friendlyName(row);
+async function removeItem(row,module=active){
+  if(!permissionMap[module]?.delete)return;
+  const name=friendlyName(row,module);
   if(!window.confirm("¿Eliminar «"+name+"»? Esta acción no se puede deshacer."))return;
   try{
-    await request(endpoint(active)+row.id+"/",{method:"DELETE"});
+    await request(endpoint(module)+row.id+"/",{method:"DELETE"});
     selectedId=null;
     notify("Registro eliminado correctamente.");
-    await load(active);
+    if(active===module)await load(module);
   }catch(error){notify("No se pudo eliminar: "+error.message);}
 }
 function selectedItem(){
