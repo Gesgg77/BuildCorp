@@ -17,15 +17,19 @@ if [ ! -x "$CERTBOT" ]; then CERTBOT="$(command -v certbot || true)"; fi
 read -rp 'Correo para certificado Lets Encrypt: ' EMAIL
 case "$EMAIL" in *@*.*) ;; *) echo 'Correo invalido'; exit 2 ;; esac
 BACKUP="$(mktemp)"
+ENV_BACKUP="$(mktemp)"
 sudo cp "$SITE" "$BACKUP"
+cp "$ENVFILE" "$ENV_BACKUP"
 OK=0
 cleanup(){
   if [ "$OK" -ne 1 ]; then
     echo 'Restaurando configuracion anterior de Nginx'
     sudo cp "$BACKUP" "$SITE"
+    cp "$ENV_BACKUP" "$ENVFILE"
+    chmod 600 "$ENVFILE"
     sudo nginx -t && sudo systemctl reload nginx || true
   fi
-  rm -f "$BACKUP"
+  rm -f "$BACKUP" "$ENV_BACKUP"
 }
 trap cleanup EXIT
 sudo mkdir -p "$WEBROOT/.well-known/acme-challenge"
@@ -34,7 +38,7 @@ server {
     listen 80 default_server;
     server_name _;
     location /.well-known/acme-challenge/ { root $WEBROOT; default_type text/plain; }
-    location /static/ { alias /var/www/buildcorp/static/; }
+    location /static/ { alias $HOME/BuildCorp/staticfiles/; }
     location / {
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host \$host;
@@ -60,7 +64,7 @@ server {
     ssl_certificate $LIVE/fullchain.pem;
     ssl_certificate_key $LIVE/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
-    location /static/ { alias /var/www/buildcorp/static/; }
+    location /static/ { alias $HOME/BuildCorp/staticfiles/; }
     location / {
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host \$host;
