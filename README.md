@@ -17,6 +17,7 @@ python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 cp .env.example .env
 ```
+El archivo de ejemplo incluye las variables requeridas con valores vacíos o locales. Antes de ejecutar Django, completa `DJANGO_SECRET_KEY`, `DB_NAME`, `DB_USER` y `DB_PASSWORD`. No publiques el archivo `.env`.
 Edita `.env` para configurar los datos reales. Genera una clave nueva ejecutando:
 ```bash
 .venv/bin/python -c "import secrets; print(secrets.token_urlsafe(48))"
