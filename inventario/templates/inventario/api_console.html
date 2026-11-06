@@ -1,99 +1,162 @@
 {% load static %}
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Centro de gestión | BuildCorp</title>
-<link rel="stylesheet" href="{% static 'inventario/style.css' %}">
-<link rel="stylesheet" href="{% static 'inventario/api_console.css' %}">
-<script src="{% static 'inventario/api_console.js' %}" defer></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0B192E">
+  <title>Workspace · BuildCorp</title>
+  <link rel="stylesheet" href="{% static 'inventario/style.css' %}?v=20261106">
+  <link rel="stylesheet" href="{% static 'inventario/api_console.css' %}?v=20261106b">
+  <script src="{% static 'inventario/api_console.js' %}?v=20261106b" defer></script>
 </head>
-<body>
-<div class="shell ap-shell" id="apiApp" data-staff="{% if user.is_staff %}true{% else %}false{% endif %}" data-permissions="{{ api_permissions_json|escape }}">
-<aside class="api-sidebar">
-  <a href="/" class="brand">Build<span>Corp</span></a>
-  <p class="brand-sub">WORKSPACE / OPERACIONES</p>
-  <div class="api-side-label">NAVEGACIÓN</div>
-  <nav class="ap-nav">
-    <a href="/">◈ <span>Panel general</span></a>
-    <a href="/api/" class="active">▤ <span>Centro de gestión</span></a>
-  </nav>
-  <div class="api-side-label ap-side-gap">MÓDULOS</div>
-  <div class="ap-modules" role="group" aria-label="Módulos">
-    <button class="ap-module active" type="button" data-resource="herramientas"><span class="ap-icon">▦</span> Herramientas <span class="ap-chevron">›</span></button>
-    <button class="ap-module" type="button" data-resource="prestamos"><span class="ap-icon">↗</span> Préstamos <span class="ap-chevron">›</span></button>
-    <button class="ap-module" type="button" data-resource="contratistas"><span class="ap-icon">♙</span> Contratistas <span class="ap-chevron">›</span></button>
-    <button class="ap-module" type="button" data-resource="mantenimientos"><span class="ap-icon">⚙</span> Mantenimientos <span class="ap-chevron">›</span></button>
-  </div>
-  <div class="ap-sidebar-foot">
-    <div class="ap-online"><span class="ap-dot"></span> API conectada · Django REST</div>
-    {% if user.is_staff %}<a href="/admin/">Administración avanzada ↗</a>{% endif %}
-  </div>
-</aside>
-<main class="ap-main">
-  <div class="ap-crumb">BUILDCORP <span>/</span> OPERACIONES <span>/</span> <strong id="breadcrumb">HERRAMIENTAS</strong></div>
-  <div class="ap-title-row">
-    <div><div class="eyebrow">CENTRO DE CONTROL</div><h1 id="moduleTitle">Herramientas</h1><p id="moduleDescription">Gestiona el inventario y consulta tus registros.</p></div>
-    <div class="ap-title-actions">
-      <button type="button" class="ap-ghost" id="refreshBtn">↻ Actualizar</button>
-      <button type="button" class="btn" id="newBtn" {% if not user.is_staff %}hidden{% endif %}>+ Nuevo registro</button>
+<body class="workspace-body">
+<div id="apiApp" class="ap-shell" data-staff="{% if user.is_staff %}true{% else %}false{% endif %}" data-permissions="{{ api_permissions_json|escape }}">
+  <aside class="ap-sidebar" aria-label="Menú principal">
+    <div class="ap-brand-wrap">
+      <a class="ap-brand" href="/" aria-label="BuildCorp inicio">
+        <span class="ap-brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+        <span class="ap-brand-name">build<span>corp.</span><small>OPERATIONS CLOUD</small></span>
+      </a>
     </div>
-  </div>
-  <div class="ap-summary">
-    <div class="ap-summary-card"><div class="ap-label">REGISTROS TOTALES</div><strong id="totalCount">—</strong><small>Datos de PostgreSQL</small></div>
-    <div class="ap-summary-card"><div class="ap-label">ORIGEN DE DATOS</div><strong class="ap-summary-source">API REST</strong><small>Autenticación requerida</small></div>
-    <div class="ap-summary-card"><div class="ap-label">ESTADO DE SOLICITUD</div><strong class="ap-status" id="requestStatus">Conectando</strong><small id="updatedAt">Sin consultar</small></div>
-  </div>
-  <section class="ap-panel ap-actions-panel" aria-labelledby="actionsTitle">
-    <div class="ap-panel-top">
-      <div><h2 id="actionsTitle">Gestionar registros</h2>
-      <div class="ap-subtitle">Usa las opciones de la API sin escribir código.</div></div>
-      <span class="ap-method-badge">CRUD</span>
+    <div class="ap-nav-title">ESPACIO DE TRABAJO</div>
+    <nav class="ap-nav" aria-label="Secciones principales">
+      <a class="ap-nav-link" href="/"><span class="ap-nav-icon">▦</span> Resumen general</a>
+      <a class="ap-nav-link active" href="/api/" aria-current="page"><span class="ap-nav-icon">◫</span> Centro de gestión <span class="ap-active-indicator"></span></a>
+    </nav>
+    <div class="ap-nav-title ap-nav-title-second">MÓDULOS</div>
+    <div class="ap-module-list" role="group" aria-label="Seleccionar módulo">
+      <button class="ap-module active" type="button" data-resource="herramientas"><span class="ap-nav-icon">▥</span><span>Herramientas</span><span class="ap-module-arrow">›</span></button>
+      <button class="ap-module" type="button" data-resource="prestamos"><span class="ap-nav-icon">↗</span><span>Préstamos</span><span class="ap-module-arrow">›</span></button>
+      <button class="ap-module" type="button" data-resource="contratistas"><span class="ap-nav-icon">♧</span><span>Contratistas</span><span class="ap-module-arrow">›</span></button>
+      <button class="ap-module" type="button" data-resource="mantenimientos"><span class="ap-nav-icon">⚙</span><span>Mantenimientos</span><span class="ap-module-arrow">›</span></button>
     </div>
-    <div class="ap-action-grid">
-      <button type="button" class="ap-action-btn" id="actionGet"><span class="ap-action-method">GET</span><strong>Consultar</strong><small>Ver todos los registros</small></button>
-      <button type="button" class="ap-action-btn" id="actionPost"><span class="ap-action-method post">POST</span><strong>Crear</strong><small>Agregar un registro</small></button>
-      <button type="button" class="ap-action-btn" id="actionPatch"><span class="ap-action-method patch">PATCH</span><strong>Editar</strong><small>Modificar el seleccionado</small></button>
-      <button type="button" class="ap-action-btn" id="actionDelete"><span class="ap-action-method delete">DELETE</span><strong>Eliminar</strong><small>Borrar el seleccionado</small></button>
-    </div>
-    <div class="ap-record-picker">
-      <label for="selectedRecord">Registro para editar o eliminar</label>
-      <select id="selectedRecord"><option value="">Primero selecciona un registro...</option></select>
-      <p id="roleHelp" class="ap-permission-hint" role="status">Comprobando permisos...</p>
-    </div>
-  </section>
-  <section class="ap-panel ap-list-panel">
-    <div class="ap-panel-top">
-      <div><h2>Registros</h2><div class="ap-subtitle" id="recordsSubtitle">Información actualizada del servidor</div></div>
-      <div class="ap-tools">
-        <label class="ap-search-wrap" for="searchRecords"><span>⌕</span><input id="searchRecords" placeholder="Buscar registros..." type="search" autocomplete="off"></label>
+    <div class="ap-sidebar-bottom">
+      <div class="ap-security-note"><span class="ap-shield-icon">◇</span><div><strong>Acceso protegido</strong><small>Permisos según tu perfil</small></div></div>
+      <div class="ap-sidebar-profile">
+        <span class="ap-avatar">{{ user.username|slice:":1"|upper }}</span>
+        <div class="ap-profile-text"><strong>{{ user.username }}</strong><small>{% if user.is_superuser %}Administrador{% elif user.is_staff %}Personal autorizado{% else %}Consulta{% endif %}</small></div>
       </div>
     </div>
-    <div class="ap-table-wrap"><table class="ap-table"><thead id="tableHead"></thead><tbody id="tableBody"><tr><td>Cargando información…</td></tr></tbody></table></div>
-    <div class="ap-table-footer"><span id="tableFooter">—</span><span class="ap-seal">● Base de datos en vivo</span></div>
-  </section>
-  <section class="ap-panel ap-endpoints-panel">
-    <div class="ap-panel-top">
-      <div><div class="eyebrow">BACKEND / JSON</div><h2>Respuesta JSON de la API</h2><div class="ap-subtitle">Consulta aquí la respuesta JSON. Para crear, editar o eliminar, usa Gestión de registros arriba.</div></div>
-      <span class="ap-method-badge">GET</span>
+  </aside>
+
+  <main class="ap-main">
+    <header class="ap-topbar">
+      <div class="ap-breadcrumb"><span>Workspace</span><span class="ap-slash">/</span><strong id="breadcrumb">Herramientas</strong></div>
+      <div class="ap-topbar-actions">
+        <span class="ap-online"><span class="ap-online-dot"></span><span id="requestStatus">Conectando</span></span>
+        {% if user.is_staff %}<a class="ap-admin-link" href="/admin/" title="Abrir Django Admin">Administración <span aria-hidden="true">↗</span></a>{% endif %}
+        <form action="{% url 'logout' %}" method="post" class="ap-logout">{% csrf_token %}<button type="submit" aria-label="Cerrar sesión">Salir <span aria-hidden="true">↗</span></button></form>
+      </div>
+    </header>
+
+    <section class="ap-hero" aria-labelledby="moduleTitle">
+      <div class="ap-hero-copy">
+        <div class="ap-overline"><span class="ap-overline-dot"></span> GESTIÓN INTELIGENTE DE ACTIVOS</div>
+        <h1 id="moduleTitle">Herramientas</h1>
+        <p id="moduleDescription">Tu inventario, ordenado y bajo control.</p>
+        <div class="ap-hero-actions">
+          <button class="ap-hero-primary" type="button" id="newBtn" {% if not user.is_staff %}hidden{% endif %}>
+            <span class="ap-add-symbol">+</span><span id="newBtnLabel">Nueva herramienta</span>
+          </button>
+          <button class="ap-hero-secondary" type="button" id="refreshBtn"><span aria-hidden="true">↻</span> Actualizar datos</button>
+        </div>
+      </div>
+      <div class="ap-hero-art" aria-hidden="true">
+        <div class="ap-art-circle ap-art-circle-1"></div><div class="ap-art-circle ap-art-circle-2"></div>
+        <div class="ap-art-grid"><span></span><span></span><span></span><span></span></div>
+        <div class="ap-art-plate"><span class="ap-art-square"><i></i><i></i><i></i><i></i></span><span class="ap-art-plate-lines"><b></b><i></i><i></i></span><span class="ap-art-check">✓</span></div>
+        <div class="ap-art-float ap-art-float-one">✓ <span>Todo organizado</span></div>
+        <div class="ap-art-float ap-art-float-two">◈ <span>Tiempo real</span></div>
+      </div>
+    </section>
+
+    <section class="ap-stat-grid" aria-label="Indicadores del módulo">
+      <article class="ap-stat-card">
+        <div class="ap-stat-top"><span>REGISTROS TOTALES</span><span class="ap-stat-icon">▦</span></div>
+        <strong id="totalCount">—</strong>
+        <small>Datos de inventario</small>
+      </article>
+      <article class="ap-stat-card">
+        <div class="ap-stat-top"><span id="metricHealthyLabel">DISPONIBLES</span><span class="ap-stat-icon ap-icon-green">✓</span></div>
+        <strong id="availableCount">—</strong>
+        <small id="metricHealthySub">Listas para utilizar</small>
+      </article>
+      <article class="ap-stat-card">
+        <div class="ap-stat-top"><span id="metricAttentionLabel">REQUIEREN ATENCIÓN</span><span class="ap-stat-icon ap-icon-orange">!</span></div>
+        <strong id="attentionCount">—</strong>
+        <small id="metricAttentionSub">Según estado actual</small>
+      </article>
+      <article class="ap-stat-card ap-stat-activity">
+        <div class="ap-stat-top"><span>ACTUALIZACIÓN</span><span class="ap-stat-icon ap-icon-blue">↻</span></div>
+        <strong class="ap-stat-time" id="updatedAt">—</strong>
+        <small>Información consultada en vivo</small>
+      </article>
+    </section>
+
+    <div class="ap-work-grid">
+      <section class="ap-list-panel" aria-labelledby="recordsHeading">
+        <div class="ap-section-heading">
+          <div><div class="ap-section-kicker">BASE DE DATOS</div><h2 id="recordsHeading">Explorador de registros</h2><p id="recordsSubtitle">Selecciona un registro para editarlo o eliminarlo.</p></div>
+          <span class="ap-section-flag"><span class="ap-flag-dot"></span> PostgreSQL</span>
+        </div>
+        <div class="ap-toolbar">
+          <label class="ap-search" for="searchRecords"><span aria-hidden="true">⌕</span><input id="searchRecords" type="search" autocomplete="off" placeholder="Buscar por nombre, código o responsable…" aria-label="Buscar registros"></label>
+          <select class="ap-status-filter" id="statusFilter" aria-label="Filtrar por estado"><option value="all">Todos los estados</option></select>
+          <div class="ap-view-switch" aria-label="Tipo de vista" role="group">
+            <button type="button" class="active" id="toggleTable" aria-pressed="true" title="Vista tabla">☷</button>
+            <button type="button" id="toggleCards" aria-pressed="false" title="Vista tarjetas">▦</button>
+          </div>
+        </div>
+        <div class="ap-table-wrap" id="listTableWrap">
+          <table class="ap-table"><thead id="tableHead"></thead><tbody id="tableBody"><tr><td>Consultando información…</td></tr></tbody></table>
+        </div>
+        <div id="cardsGrid" class="ap-cards-grid" hidden></div>
+        <div class="ap-table-bottom"><span id="tableFooter">Cargando registros...</span><span class="ap-sync"><span class="ap-online-dot"></span> Sincronizado con API</span></div>
+      </section>
+
+      <aside class="ap-quick-panel" aria-labelledby="actionsTitle">
+        <div class="ap-quick-head"><div class="ap-quick-symbol">✦</div><div><div class="ap-section-kicker">HERRAMIENTAS DE TRABAJO</div><h2 id="actionsTitle">Acciones rápidas</h2></div></div>
+        <p class="ap-quick-intro">Administra los registros de forma simple y segura.</p>
+        <div class="ap-action-grid">
+          <button type="button" class="ap-action-btn" id="actionGet"><span class="ap-action-icon">⟳</span><span><strong>Consultar</strong><small>Actualizar información</small></span><span class="ap-action-arrow">›</span></button>
+          <button type="button" class="ap-action-btn" id="actionPost"><span class="ap-action-icon add">＋</span><span><strong>Crear registro</strong><small>Agregar al sistema</small></span><span class="ap-action-arrow">›</span></button>
+          <button type="button" class="ap-action-btn" id="actionPatch"><span class="ap-action-icon edit">✎</span><span><strong>Editar registro</strong><small>Actualizar sus datos</small></span><span class="ap-action-arrow">›</span></button>
+          <button type="button" class="ap-action-btn" id="actionDelete"><span class="ap-action-icon delete">⌫</span><span><strong>Eliminar registro</strong><small>Quitar del sistema</small></span><span class="ap-action-arrow">›</span></button>
+        </div>
+        <div class="ap-selection-box">
+          <label for="selectedRecord">REGISTRO SELECCIONADO</label>
+          <select id="selectedRecord"><option value="">Selecciona un registro...</option></select>
+          <p id="roleHelp" role="status">Verificando permisos de acceso...</p>
+        </div>
+        <div class="ap-quick-tip"><span>◎</span><p><strong>Consejo</strong>Selecciona una fila de la tabla o elige un registro para modificarlo.</p></div>
+      </aside>
     </div>
-    <div class="ap-endpoint-bar"><code id="apiEndpoint">GET /api/herramientas/</code><a id="openEndpoint" href="/api/herramientas/" target="_blank" rel="noopener">Abrir JSON ↗</a></div>
-    <div class="ap-response-head"><span><span class="ap-dot"></span> RESPUESTA JSON</span><button type="button" id="copyJson">Copiar respuesta</button></div>
-    <pre class="ap-json" id="apiResponse" tabindex="0">Cargando respuesta...</pre>
-  </section>
-  <footer class="ap-footer">BuildCorp · Gestión de activos · Django + PostgreSQL + AWS EC2</footer>
-</main>
+
+    <details class="ap-dev-panel">
+      <summary><span class="ap-dev-icon">{ }</span><span><strong>Herramientas para desarrolladores</strong><small>Endpoint, petición GET y respuesta JSON</small></span><span class="ap-summary-chevron">⌄</span></summary>
+      <div class="ap-dev-content">
+        <div class="ap-endpoint-bar"><code id="apiEndpoint">GET /api/herramientas/</code><a id="openEndpoint" href="/api/herramientas/" rel="noopener" target="_blank">Abrir endpoint ↗</a></div>
+        <div class="ap-response-head"><span>RESPUESTA JSON</span><button type="button" id="copyJson">Copiar JSON</button></div>
+        <pre class="ap-json" id="apiResponse" tabindex="0">Consultando...</pre>
+      </div>
+    </details>
+
+    <footer class="ap-footer"><span>© BuildCorp · Plataforma de operaciones</span><span>Django · REST Framework · PostgreSQL · AWS</span></footer>
+  </main>
 </div>
+
 <div id="toast" class="ap-toast" role="status" aria-live="polite" hidden></div>
 <div class="ap-dialog-wrap" id="editorWrap" hidden>
   <div class="ap-dialog-backdrop" id="editorBackdrop"></div>
   <section class="ap-dialog" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
-    <div class="ap-editor-head"><div><div class="eyebrow">EDICIÓN DE DATOS</div><h2 id="editorTitle">Nuevo registro</h2></div><button id="closeEditor" type="button" class="ap-close" aria-label="Cerrar">×</button></div>
+    <div class="ap-editor-head"><div><div class="ap-section-kicker">GESTIÓN DE REGISTROS</div><h2 id="editorTitle">Nuevo registro</h2><p id="editorSubtitle">Completa los datos para guardarlos en BuildCorp.</p></div><button id="closeEditor" type="button" class="ap-close" aria-label="Cerrar formulario">×</button></div>
     <div id="editorError" class="ap-editor-error" role="alert" hidden></div>
     <form id="editorForm" novalidate>{% csrf_token %}
       <div class="ap-form-fields" id="editorFields"></div>
-      <div class="ap-form-actions"><button class="ap-ghost" type="button" id="cancelEditor">Cancelar</button><button class="btn" type="submit" id="saveEditor">Guardar</button></div>
+      <div class="ap-form-actions"><button type="button" class="ap-ghost" id="cancelEditor">Cancelar</button><button type="submit" class="ap-submit" id="saveEditor">Guardar cambios <span>→</span></button></div>
     </form>
   </section>
 </div>
-</body></html>
+</body>
+</html>
