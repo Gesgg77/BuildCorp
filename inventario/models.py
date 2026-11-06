@@ -88,7 +88,12 @@ class Prestamo(models.Model):
             ).exclude(pk=self.pk).exists()
             if ocupada:
                 errors["herramienta"] = "Esta herramienta ya está prestada."
-            elif self._state.adding and self.herramienta.estado != "disponible":
+            elif (
+                self._state.adding
+                or Prestamo.objects.filter(pk=self.pk)
+                .exclude(herramienta_id=self.herramienta_id)
+                .exists()
+            ) and self.herramienta.estado != "disponible":
                 errors["herramienta"] = "La herramienta no está disponible."
 
         if self.contratista_id and self.fecha_devolucion is None:
