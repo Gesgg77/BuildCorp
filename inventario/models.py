@@ -156,3 +156,7 @@ class Mantenimiento(models.Model):
             raise ValidationError({
                 "fecha_realizada": "La realización no puede anteceder a la programación."
             })
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
