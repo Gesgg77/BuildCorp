@@ -35,15 +35,20 @@ fi
 
 sudo mkdir -p "$WEBROOT/.well-known/acme-challenge"
 BACKUP="$(mktemp)"
+ENVFILE="$HOME/BuildCorp/.env"
+ENV_BACKUP="$(mktemp)"
 sudo cp "$SITE" "$BACKUP"
+cp "$ENVFILE" "$ENV_BACKUP"
 COMPLETE=0
 restore() {
   if [[ "$COMPLETE" -ne 1 ]]; then
     echo "Restaurando Nginx anterior..."
     sudo cp "$BACKUP" "$SITE"
+    cp "$ENV_BACKUP" "$ENVFILE"
+    chmod 600 "$ENVFILE"
     sudo nginx -t && sudo systemctl reload nginx || true
   fi
-  rm -f "$BACKUP"
+  rm -f "$BACKUP" "$ENV_BACKUP"
 }
 trap restore EXIT
 
@@ -55,7 +60,7 @@ server {
         root $WEBROOT;
         default_type text/plain;
     }
-    location /static/ { alias /var/www/buildcorp/static/; }
+    location /static/ { alias $HOME/BuildCorp/staticfiles/; }
     location / {
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host \$host;
@@ -100,7 +105,7 @@ server {
     add_header X-Content-Type-Options nosniff always;
     add_header Referrer-Policy strict-origin-when-cross-origin always;
 
-    location /static/ { alias /var/www/buildcorp/static/; }
+    location /static/ { alias $HOME/BuildCorp/staticfiles/; }
     location / {
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host \$host;
