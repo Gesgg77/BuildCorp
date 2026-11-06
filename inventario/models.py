@@ -123,7 +123,10 @@ class Prestamo(models.Model):
             super().save(*args, **kwargs)
             if self.fecha_devolucion is None:
                 Herramienta.objects.filter(pk=self.herramienta_id).update(estado="en_uso")
-            else:
+            elif not Prestamo.objects.filter(
+                herramienta_id=self.herramienta_id,
+                fecha_devolucion__isnull=True,
+            ).exists():
                 Herramienta.objects.filter(
                     pk=self.herramienta_id, estado="en_uso"
                 ).update(estado="disponible")
