@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import transaction
 from django.db.models.deletion import ProtectedError
 from rest_framework import serializers, viewsets
 from rest_framework.exceptions import ValidationError as DRFValidationError
@@ -113,14 +114,15 @@ class PrestamoViewSet(AdminEscrituraAutenticadoLectura, viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         herramienta_id = instance.herramienta_id
-        instance.delete()
-        if not Prestamo.objects.filter(
-            herramienta_id=herramienta_id,
-            fecha_devolucion__isnull=True,
-        ).exists():
-            Herramienta.objects.filter(
-                pk=herramienta_id, estado="en_uso"
-            ).update(estado="disponible")
+        with transaction.atomic():
+            instance.delete()
+            if not Prestamo.objects.filter(
+                herramienta_id=herramienta_id,
+                fecha_devolucion__isnull=True,
+            ).exists():
+                Herramienta.objects.filter(
+                    pk=herramienta_id, estado="en_uso"
+                ).update(estado="disponible")
 
 
 class MantenimientoViewSet(AdminEscrituraAutenticadoLectura, viewsets.ModelViewSet):
